@@ -35,7 +35,9 @@ Leanで形式化しながら、初歩的な数学の本を読んでいます。�
 - Lean 4 の環境があればコードを試せます。  
 - [Lean 4 Web](https://live.lean-lang.org)にソースを貼り付けても試せます。
 
-## mathlibについて
+## 補足
+
+### mathlibについて
 
 `mathlib`というLeanの数学ライブラリーがあります。
 
