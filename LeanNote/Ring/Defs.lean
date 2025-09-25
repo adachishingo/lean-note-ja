@@ -37,3 +37,33 @@ class Ring' (α : Type) where
 
 infixl:65 " + " => Ring'.add
 infixl:70 " * " => Ring'.mul
+
+
+/-- 可換環: ab = ba が成り立つ環 -/
+class CommRing' (α : Type) extends Ring' α where
+  /-- ab = ba -/
+  mul_comm : ∀ a b, mul a b = mul b a
+
+
+/-- 可除環(division ring) -/
+class DivisionRing' (α : Type) extends Ring' α where
+  /-- 1 ≠ 0 、つまり零環ではない -/
+  one_ne_zero : one ≠ zero
+
+  /-- a⁻¹ -/
+  inv : α → α
+
+  /--
+  a ≠ 0 が乗法ｎ関して可逆元
+  すべての元 a が 0 ではないならば、 a⁻¹ * a = 1 (つまり、可逆元になれる)
+  -/
+  mul_inv : ∀ a, a ≠ Ring'.zero → Ring'.mul a (inv a) = Ring'.one
+
+  /-
+  inv : α
+  にして、
+  mul_inv を
+  ...  → Ring'.mul a inv ...
+  にしてもいいのではないかと思ったが、
+  それだと a⁻¹ が1つしか存在しない(どの元に対しても同じ1つの単元をかけて1になる)ことになるので、おかしい
+  -/
