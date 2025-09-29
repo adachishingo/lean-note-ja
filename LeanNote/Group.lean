@@ -1,7 +1,7 @@
-import Mathlib.GroupTheory.QuotientGroup.Defs
 import Mathlib.Algebra.Group.Defs
 import Mathlib.Algebra.Group.Subgroup.Defs -- Subgroup
 import Mathlib.Data.Fintype.Card
+import Mathlib.GroupTheory.QuotientGroup.Defs
 -- import Mathlib.Data.Fintype.Defs
 -- import Mathlib.Data.Nat.Find
 -- import Mathlib.Data.Set.Defs
@@ -10,26 +10,43 @@ import Mathlib.Data.Fintype.Card
 /-!
 # 群
 
+## 群の定義
+
 群の定義
 置換
 置換群
 互換
 巡回置換
+
+## 部分群
+
 部分群
 生成元
 生成される部分群
 群の直積
+
+## 準同型
+
 準同型
 同型
 自己同型
 内部自己同型
 共役
+
+## 同値関係、剰余類
+
 同値関係
 剰余類
 左剰余類
 両側剰余類
+
+## 正規部分群
+
 正規部分群
 
+## 準同型定理
+
+準同型定理
 -/
 
 
@@ -61,6 +78,10 @@ class Group' (α : Type) where
 /- 位数(order) -/
 -- TODO
 
+/- 自明な群 G = {e}
+ee = e と定義すると、群になる
+-/
+
 /- 群にべき乗(power)を定義 -/
 -- def pow {α : Type} [Group α] (x : α) : ℕ → α
 --   | 0 => 1
@@ -75,7 +96,7 @@ structure Perm (α : Type) where
   bij : Function.Bijective f -- 写像 f は全単射
 
 /-- 置換群(permutation group): Xの置換全体からなる群 -/
-instance permGroup {α : Type} : Group (Perm α) where
+instance instPermGroup {α : Type} : Group (Perm α) where
   -- TODO: 証明を書く
   mul := sorry
   one := sorry
@@ -114,7 +135,7 @@ structure Subgroup' (G : Type) [Group G] where
   carrier : Set G
   -- 部分群の元 a, b に対して、 a * b も元
   -- A ∧ B → C を、 A → B → C という書き方をすることがあるようです。
-  mul_mem {a b : G} : a ∈ carrier → b ∈ carrier → a * b ∈ carrier 
+  mul_mem {a b : G} : a ∈ carrier → b ∈ carrier → a * b ∈ carrier
   one_mem : 1 ∈ carrier -- 単位元がある
   inv_mem {x : G} : x ∈ carrier → x⁻¹ ∈ carrier -- 逆元がある
 
@@ -175,13 +196,14 @@ def IsCyclic' {α : Type} [Group α] : Prop :=
   ∃ g : α, cyclicSubgroupGeneratedBy g = (Set.univ : Set α)
 
 /-- 群の直積(direct product)
+教科書では、
 有限の場合 G₁ ⨯ ... ⨯ Gₜ
-無限の場合 ΠGᵢ と書く -/
+無限の場合 ΠGᵢ と書かれます -/
 def GroupProd (I : Type) (G : I → Type) [∀ i, Group (G i)] : Type :=
   (i : I) → G i  -- 各 i に対して G i の元を割り当てる関数（直積）
 
 
-/-! ## 位数 -/
+/-! ### 位数 -/
 
 -- TODO
 
@@ -198,7 +220,7 @@ def GroupProd (I : Type) (G : I → Type) [∀ i, Group (G i)] : Type :=
 --   | none   => ⊤
 
 
-/-! ### 準同型、同型 -/
+/-! ### 準同型 -/
 
 /-- 準同型(homomorphism) -/
 structure Hom (G₁ G₂ : Type) [Group G₁] [Group G₂] where
@@ -211,6 +233,7 @@ structure Hom (G₁ G₂ : Type) [Group G₁] [Group G₂] where
 def Ker' {G₁ G₂ : Type} [Group G₁] [Group G₂] (φ : G₁ → G₂) : Set G₁ :=
   { x | φ x = 1 }
 
+/-- 核 (部分群とする場合) -/
 def Ker {G₁ G₂ : Type} [Group G₁] [Group G₂] (φ : G₁ → G₂) : Subgroup G₁ :=
 {
   carrier := { x | φ x = 1 },
@@ -220,11 +243,20 @@ def Ker {G₁ G₂ : Type} [Group G₁] [Group G₂] (φ : G₁ → G₂) : Subg
 }
 
 /-- 像(image) -/
-def Im {G₁ G₂ : Type} [Group G₁] [Group G₂] (φ : G₁ → G₂) : Set G₂ :=
+def Im' {G₁ G₂ : Type} [Group G₁] [Group G₂] (φ : G₁ → G₂) : Set G₂ :=
   { φ x | x : G₁ }
 
+/-- 像 (部分群とする場合) -/
+def Im {G₁ G₂ : Type} [Group G₁] [Group G₂] (φ : G₁ → G₂) : Subgroup G₂ :=
+{
+  carrier := { φ x | x : G₁},
+  mul_mem' := sorry,
+  one_mem' := sorry,
+  inv_mem' := sorry
+}
+
 /-- 同型(isomorphism)
-G₁ ≃ G₂ と書く -/
+教科書では、 G₁ ≃ G₂ と書かれます -/
 structure Iso (G₁ G₂ : Type) [Group G₁] [Group G₂] where
   hom : Hom G₁ G₂ -- G₁ G₂ は準同型
   invFun : G₂ → G₁ -- G₂ → G₁ の写像
@@ -303,7 +335,8 @@ def φ {G : Type} [Group G] : G → Aut G :=
   }
 
 /-- 例: 上の φ は準同型である -/
--- φ は、 (φ : G → Aut G) にしないとエラー(typeclass instance problem is stuck, it is often due to metavariables)になった
+-- φ は、 (φ : G → Aut G) にしないとエラー
+-- (typeclass instance problem is stuck, it is often due to metavariables)になった
 def phiHom {G : Type} [Group G] : Hom G (Aut G) :=
 {
   -- TODO: 証明を書く
@@ -316,7 +349,25 @@ def phiHom {G : Type} [Group G] : Hom G (Aut G) :=
 上の φ について、 Im(φ) ⊆ Aut G を内部自己同型群といい、 Inn Gと書く
 -/
 def Inn (G : Type) [Group G] : Set (Aut G) :=
-  Im φ
+  Im' φ
+
+/-
+準同型 :
+`MonoidHom` というのがあるので、以降は `Hom` の代わりにこれを使います。
+`Hom G H` を `MonoidHom G H` または `G →* H` とも書くことができます。
+
+同型 :
+`MulEquiv` というのがあるので、以降は `Iso` の代わりにこれを使います。
+`Iso G H` を `MulEquiv` または `G ≃* H` とも書くことができます。
+
+核 :
+`MonoidHom.ker` というのがあるので、以降は `Ker` の代わりにこれを使います。
+`Ker φ` を `φ.ker` と書くことができます。
+
+像 :
+`MonoidHom.range` というのがあるので、以降は `Im` の代わりにこれを使います。
+`Im φ` を `φ.range` と書くことができます。
+-/
 
 
 /-! ## 同値関係、剰余類 -/
@@ -332,7 +383,7 @@ def x_eq_y {α : Type} [Group α] : α → α → Prop :=
   fun x y => x = y
 
 /- 例: x = y を同値関係にしてみる -/
-instance EqEquiv' {α : Type} [Group α] : Equivalence' (@x_eq_y α _ ) where
+instance instEqEquiv' {α : Type} [Group α] : Equivalence' (@x_eq_y α _ ) where
   -- TODO: 証明を書く
   refl := sorry
   symm := sorry
@@ -354,7 +405,7 @@ instance EqEquiv' {α : Type} [Group α] : Equivalence' (@x_eq_y α _ ) where
 -/
 
 /-- ライブラリーでは、同値関係を表すのに、 `Equivalence` というものを使う -/
-instance EqEquiv {α : Type} [Group α] : Equivalence (@x_eq_y α _) where
+instance instEqEquiv {α : Type} [Group α] : Equivalence (@x_eq_y α _) where
   refl := sorry
   symm := sorry
   trans := sorry
@@ -362,21 +413,20 @@ instance EqEquiv {α : Type} [Group α] : Equivalence (@x_eq_y α _) where
 /-- ライブラリーでは、同値関係をもつ集合を `Setid` というものを使う -/
 instance SetoidEq {α : Type} [Group α] : Setoid α where
   r := x_eq_y -- r : 同値関係
-  iseqv := EqEquiv -- 同値関係の証明
+  iseqv := instEqEquiv -- 同値関係の証明
 
-/-- ライブラリーでは、商集合を表すのに、 `Quitient` というものを使う
-同値関係 ~ による商集合を S/~ と書く-/
+/-- ライブラリーでは、商集合を表すのに、 `Quotient` というものを使う
+教科書では、同値関係 ~ による商集合は S/~ と書かれます。 -/
 def QuotientEq {α : Type} [Group α] : Type := Quotient (SetoidEq : Setoid α)
 
-/--
-つまり、同値関係による商は
-同値関係による商集合（Quotient）の型構成子
--/
-def QuotientBy {α : Type} (r : α → α → Prop) (h : Equivalence r): Type :=
+/-- 同値関係による商集合の型、つまり同値類 -/
+def QuotientBy {α : Type} (r : α → α → Prop) (h : Equivalence r) : Type :=
   Quotient { r := r, iseqv := ‹Equivalence r› }
 
 /-
+つまり、
 同値関係 - 同値類 - 商が、それぞれライブラリーでどう表されているか
+をまとめると、
 
 同値関係: Equivalence
 ↓
@@ -397,7 +447,7 @@ def leftRel {G : Type} [Group G] (H : Subgroup G) (x y : G) : Prop :=
   x⁻¹ * y ∈ H
 
 /-- x⁻¹ * y ∈ H は同値関係 -/
-def LeftRelEquiv {G : Type} [Group G] (H : Subgroup G) : Equivalence (leftRel H) :=
+instance LeftRelEquiv {G : Type} [Group G] (H : Subgroup G) : Equivalence (leftRel H) :=
 {
   refl := by
     intro h
@@ -417,22 +467,22 @@ def LeftRelEquiv {G : Type} [Group G] (H : Subgroup G) : Equivalence (leftRel H)
 }
 
 /-- 同値類を作るために、 x⁻¹ * y ∈ H の `Setoid` を作る -/
-def LeftRelSetoid  {G : Type} [Group G] (H : Subgroup G) : Setoid G :=
+instance LeftRelSetoid {G : Type} [Group G] (H : Subgroup G) : Setoid G :=
 {
     r := leftRel H,
     iseqv := LeftRelEquiv H
 }
 
 /-- 同値類 -/
-def LeftCosetClass {G : Type} [Group G] (H : Subgroup G)  (x : G) : Quotient (LeftRelSetoid H) :=
+def LeftCosetClass {G : Type} [Group G] (H : Subgroup G) (x : G) : Quotient (LeftRelSetoid H) :=
   Quotient.mk'' x
 
 /-- 同値類 (`⟦⟧`を使った記法) -/
-def LeftCosetClass' {G : Type} [Group G] (H : Subgroup G)  (x : G) : Quotient (LeftRelSetoid H) :=
+def LeftCosetClass' {G : Type} [Group G] (H : Subgroup G) (x : G) : Quotient (LeftRelSetoid H) :=
   ⟦x⟧
 
 /-- この同値関係による商 つまり 左剰余類の集合
-G/H と書く -/
+教科書では、 G/H と書かれます。 -/
 def LeftCosetSet {G : Type} [Group G] (H : Subgroup G) : Type := Quotient (LeftRelSetoid H)
 
 
@@ -454,33 +504,36 @@ def DoubleCosetRel {G : Type} [Group G] (H K : Subgroup G) (g₁ g₂ : G) : Pro
   ∃ h ∈ H, ∃ k ∈ K, g₁ = h * g₂ * k
 
 /-- これは同値関係 -/
-def DoubleCosetEquiv {G : Type} [Group G] (H K : Subgroup G) : Equivalence (DoubleCosetRel H K) :=
+instance instDoubleCosetEquiv {G : Type} [Group G] (H K : Subgroup G) : Equivalence (DoubleCosetRel H K) :=
   sorry -- TODO: 証明を書く
 
 /-- `Setoid` -/
-def DoubleCosetSetoid  {G : Type} [Group G] (H K : Subgroup G) : Setoid G :=
+instance instDoubleCosetSetoid {G : Type} [Group G] (H K : Subgroup G) : Setoid G :=
 {
     r := DoubleCosetRel H K,
-    iseqv := DoubleCosetEquiv H K
+    iseqv := instDoubleCosetEquiv H K
 }
 
 /-- `Setoid` (`⟨⟩` を使った記法) -/
-def DoubleCosetSetoid' {G : Type} [Group G] (H K : Subgroup G) : Setoid G :=
-  ⟨DoubleCosetRel H K, DoubleCosetEquiv H K⟩
+def instDoubleCosetSetoid' {G : Type} [Group G] (H K : Subgroup G) : Setoid G :=
+  ⟨DoubleCosetRel H K, instDoubleCosetEquiv H K⟩
 
 /-- 両側剰余類 -/
-def DoubleCosetClass {G : Type} [Group G] (H K: Subgroup G) (x : G) : Quotient (DoubleCosetSetoid H K) :=
-  Quotient.mk (DoubleCosetSetoid H K) x
+def DoubleCosetClass {G : Type} [Group G] (H K : Subgroup G) (x : G) :
+    Quotient (instDoubleCosetSetoid H K) :=
+  Quotient.mk (instDoubleCosetSetoid H K) x
 
 /-- 同値関係による商、つまり両側剰余類の集合
-H\G/K と書く -/
-def doubleCoset {G : Type} [Group G] (H K : Subgroup G) : Type := Quotient (DoubleCosetSetoid H K)
+教科書では、 H\G/K と書かれます -/
+def doubleCoset {G : Type} [Group G] (H K : Subgroup G) :
+    Type
+  := Quotient (instDoubleCosetSetoid H K)
 
 
 /-! ### 正規部分群 -/
 
 /-- 正規部分群(normal subgroup)
-G ▷ H と書く -/
+教科書では、　G ▷ H と書かれます -/
 def IsNormalSubgroup {G : Type} [Group G] (H : Subgroup G) : Prop :=
   ∀ g : G, ∀ h ∈ H, g * h * g ⁻¹ ∈ H
 
@@ -496,6 +549,11 @@ def quotientMul {G : Type} [Group G] (H : Subgroup G) [Normal H] :
     (fun g h => Quotient.mk'' (g * h)) -- 定義する関数 (gN)(hN) = (gh)N
     (sorry) -- 関数が well-defined であることの証明 -- TODO: 証明を書く
 
+-- 自前定義用に、KerをNormalのインスタンスにする(=Kerは正規部分群)
+instance instKerNormal {G H : Type} [Group G] [Group H] (φ : Hom G H) :
+    Normal (Ker φ.toFun) := sorry
+
+/- `Subgroup.Normal` というのがあるので、以降はこれを使います。 -/
 
 /-! ### 剰余群(factor group) -/
 
@@ -504,14 +562,125 @@ def QuotientGroup {G : Type} [Group G] (N : Subgroup G) [Normal N] : Type :=
   Quotient (LeftRelSetoid N)
 
 /-- 剰余群を群にする -/
-instance quotientGroupInst {G : Type} [Group G] (N : Subgroup G) [Normal N] : Group (QuotientGroup N) :=
-{
-  -- TODO: 証明を書く
-  mul_assoc := sorry,
-  mul := sorry,
-  one := sorry,
-  one_mul := sorry,
-  mul_one := sorry,
-  inv := sorry,
-  inv_mul_cancel := sorry
-}
+instance instQuotientGroup {G : Type} [Group G] (N : Subgroup G) [Normal N] :
+    Group (QuotientGroup N) :=
+  {
+    -- TODO: 証明を書く
+    mul_assoc := sorry,
+    mul := sorry,
+    one := sorry,
+    one_mul := sorry,
+    mul_one := sorry,
+    inv := sorry,
+    inv_mul_cancel := sorry
+  }
+
+/-
+商群(剰余群) :
+`HasQuotient.Quotient` というのがあるので、以降は `QuotientGroup` の代わりにこれを使います。
+`QuotientGroup G H` を `G ⧸ H` と書くことができます。
+-/
+
+
+/-! ### 準同型定理 -/
+
+/-
+準同型 φ : G → H に対して、
+自然な準同型 π : G → G/Ker(φ)とするとき
+φ = π ∘ ψ となるような
+ψ : G/Ker(φ) → H がただひとつ存在し、
+ψはG/Ker(φ)からIm(φ)への同型となる
+-/
+
+-- mathlibを使った定義
+-- Mathlib.GroupTheory.QuotientGroup.Basic QuotientGroup.quotientKerEquivRange
+/-- 準同型定理 -/
+def firstIsomorphismTheorem {G H : Type} [Group G] [Group H] (φ : G →* H) :
+    G ⧸ φ.ker ≃* φ.range := sorry
+
+-- mathlibの定義を、自前定義版に置き換え
+/-- 準同型定理 -/
+def firstIsomorphismTheorem' {G H : Type} [Group G] [Group H] (φ : Hom G H) :
+    Iso (QuotientGroup (Ker φ.toFun)) (Im φ.toFun) := sorry
+
+
+/-- 準同型定理
+教科書の定義に沿ったもの
+
+φ : G → H を群の準同型、
+π をG → G/Ker(φ) を自然な準同型とするとき、
+φ = ψ ∘ π となるような準同型 ψ : G/Ker(φ) → H がただ一つ存在し、
+ψ は G/Ker(φ) から Im(φ) への同型となる
+
+QuotientGroup.mk' φ.ker は、自然な準同型を表す(上記の π に該当)
+-/
+theorem first_homomorphism_theorem {G H : Type} [Group G] [Group H] (φ : G →* H) :
+    ∃! ψ : G ⧸ φ.ker →* H, ψ ∘ QuotientGroup.mk' φ.ker = φ
+  := sorry
+
+-- /-  -/
+-- theorem a {G : Type} [Group G] {N : Subgroup G} [Subgroup.Normal N] :
+
+
+theorem second_homomorphism_theorem {G : Type} [Group G] (H N : Subgroup G) [Subgroup.Normal N] :
+    ∃ K : Subgroup G, K = H ⊔ N ∧ H ⊔ N = N ⊔ H ∧
+    Subgroup.Normal (H ⊓ N) -- ∧ ...
+    := sorry
+
+
+/-! ### 群の作用(action) -/
+
+/-- 群の作用
+φ : G × X → X で、
+- φ(1G, x) = x
+- φ(g, φ(h, x)) = φ(g * x, x)
+を満たすもの
+g • x や gx とも書く
+
+G の X への作用があるとき、「G は X に作用する」という。
+-/
+structure LeftAction {G X : Type} [Group G] (φ : G → X → X) : Prop where
+  one_mul : ∀ x, φ 1 x = x
+  mul_assoc : ∀ g h x, φ g (φ h x) = φ (g * h) x
+
+/- 作用を表す `MulAction` があるので、以降はこちらを使います。
+群 G が集合 X に作用することを `[MulAction G X]` と書くことができます。 -/
+
+/- 軌道(orbit) -/
+def orbit' {G X : Type} [Group G] [MulAction G X] (x : X) : Set X :=
+  { y | ∃ g : G, g • x = y}
+
+/- `MulAction.orbit` というのがあるので、以降はこちらを使います。 -/
+
+
+/- 安定化群(stabilizer) -/
+def stabilizer' {G X : Type} [Group G] [MulAction G X] (x : X) : Set G :=
+  { g | ∃ g : G, g • x = x}
+
+/- `stabilizer` というのがあるので、以降はこちらを使います。 -/
+
+/- 共役類 -/
+
+/- 交換子(commutator) -/
+def commutator' {G : Type} [Group G] (a b : G) : G :=
+  a * b * a⁻¹ * b⁻¹
+
+/-- { [a, b] | a ∈ H, b ∈ K } で構成される G の部分群 -/
+def commutatorSubgroup {G : Type} [Group G] (H : Subgroup G) (K : Subgroup G) : Subgroup G :=
+  {
+    carrier := { g | ∃ a ∈ H, ∃ b ∈ K, g = commutator' a b },
+    mul_mem' := sorry,
+    one_mem' := sorry,
+    inv_mem' := sorry
+  }
+
+/-- 交換子群 -/
+def commutatorGroup {G : Type} [Group G] : Subgroup G :=
+  commutatorSubgroup (⊤ : Subgroup G) (⊤ : Subgroup G)
+
+/-
+交換子群は
+`commutator` というのがあるので、こちらを使います。
+`commutator G` 、または `⁅_, _⁆` と書きます。
+-/
+
