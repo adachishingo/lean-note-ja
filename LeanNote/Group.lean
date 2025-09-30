@@ -2,6 +2,8 @@ import Mathlib.Algebra.Group.Defs
 import Mathlib.Algebra.Group.Subgroup.Defs -- Subgroup
 import Mathlib.Data.Fintype.Card
 import Mathlib.GroupTheory.QuotientGroup.Defs
+import Mathlib.SetTheory.Cardinal.Finite -- Nat.card
+import Mathlib.GroupTheory.OrderOfElement -- orderOf
 -- import Mathlib.Data.Fintype.Defs
 -- import Mathlib.Data.Nat.Find
 -- import Mathlib.Data.Set.Defs
@@ -75,8 +77,10 @@ class Group' (α : Type) where
 
 /- ライブラリーに、群を表す `Group` が定義されているので、以降は `Group` を使います。 -/
 
-/- 位数(order) -/
--- TODO
+/- 群の位数(order)
+群の元の個数を G の位数という
+教科書では |G| と書かれます -/
+-- `Nat.card G` と書くことができます。
 
 /- 自明な群 G = {e}
 ee = e と定義すると、群になる
@@ -203,21 +207,11 @@ def GroupProd (I : Type) (G : I → Type) [∀ i, Group (G i)] : Type :=
   (i : I) → G i  -- 各 i に対して G i の元を割り当てる関数（直積）
 
 
-/-! ### 位数 -/
+/-! ### 群の元の位数 -/
 
--- TODO
-
--- /-- 条件に一致する最初の要素を取得 -/
--- def listFind {α : Type} (p : α → Bool) : List α → Option α
---   | [] => none
---   | x :: xs => if p x then some x else listFind p xs
-
--- /-- 位数: x ∈ G で xⁿ = 1G となる最小のもの、存在しない場合は ∞ -/
--- def order {α : Type} [Group α] [DecidableEq α] (x : α) (maxN : ℕ) : WithTop ℕ :=
---   let check (n : ℕ) := n ≠ 0 ∧ x ^ n = 1
---   match listFind check (List.range (maxN + 1)) with
---   | some n => n
---   | none   => ⊤
+/- 群の元の位数
+x ∈ G で xⁿ = 1G となる最小のもの、存在しない場合は ∞ -/
+-- `orderOf x` と書くことができます。
 
 
 /-! ### 準同型 -/
@@ -436,7 +430,8 @@ def QuotientBy {α : Type} (r : α → α → Prop) (h : Equivalence r) : Type :
 -/
 
 /-- S から S/~ への自然な写像(natural map) -/
-def naturalMap {α : Type} (r : α → α → Prop) (h : Equivalence r) : α → Quotient (Setoid.mk r h) :=
+def naturalMap {α : Type} (r : α → α → Prop) (h : Equivalence r) :
+    α → Quotient (Setoid.mk r h) :=
   fun a => Quotient.mk (Setoid.mk r h) a
 
 
@@ -447,24 +442,25 @@ def leftRel {G : Type} [Group G] (H : Subgroup G) (x y : G) : Prop :=
   x⁻¹ * y ∈ H
 
 /-- x⁻¹ * y ∈ H は同値関係 -/
-instance LeftRelEquiv {G : Type} [Group G] (H : Subgroup G) : Equivalence (leftRel H) :=
-{
-  refl := by
-    intro h
-    rw [leftRel]
-    rw [inv_mul_cancel]
-    apply one_mem
-  ,
-  -- TODO: 証明を書く
-  symm := by
-    intro h h2 h3
-    rw [leftRel]
-    rw [leftRel] at h3
-    sorry
-  ,
-  -- TODO: 証明を書く
-  trans := sorry
-}
+instance LeftRelEquiv {G : Type} [Group G] (H : Subgroup G) :
+    Equivalence (leftRel H) :=
+  {
+    refl := by
+      intro h
+      rw [leftRel]
+      rw [inv_mul_cancel]
+      apply one_mem
+    ,
+    -- TODO: 証明を書く
+    symm := by
+      intro h h2 h3
+      rw [leftRel]
+      rw [leftRel] at h3
+      sorry
+    ,
+    -- TODO: 証明を書く
+    trans := sorry
+  }
 
 /-- 同値類を作るために、 x⁻¹ * y ∈ H の `Setoid` を作る -/
 instance LeftRelSetoid {G : Type} [Group G] (H : Subgroup G) : Setoid G :=
@@ -474,27 +470,46 @@ instance LeftRelSetoid {G : Type} [Group G] (H : Subgroup G) : Setoid G :=
 }
 
 /-- 同値類 -/
-def LeftCosetClass {G : Type} [Group G] (H : Subgroup G) (x : G) : Quotient (LeftRelSetoid H) :=
+def LeftCosetClass {G : Type} [Group G] (H : Subgroup G) (x : G) :
+    Quotient (LeftRelSetoid H) :=
   Quotient.mk'' x
 
 /-- 同値類 (`⟦⟧`を使った記法) -/
-def LeftCosetClass' {G : Type} [Group G] (H : Subgroup G) (x : G) : Quotient (LeftRelSetoid H) :=
+def LeftCosetClass' {G : Type} [Group G] (H : Subgroup G) (x : G) :
+    Quotient (LeftRelSetoid H) :=
   ⟦x⟧
 
 /-- この同値関係による商 つまり 左剰余類の集合
 教科書では、 G/H と書かれます。 -/
-def LeftCosetSet {G : Type} [Group G] (H : Subgroup G) : Type := Quotient (LeftRelSetoid H)
+def LeftCosetSet {G : Type} [Group G] (H : Subgroup G) :
+    Type :=
+  Quotient (LeftRelSetoid H)
 
 
 /-! ### 指数(index) -/
 
 /-- 指数を定義するため、 G と H が有限の場合を定義 -/
 instance FintypeLeftCosetSet {G : Type} [Group G] [Fintype G] (H : Subgroup G) [Fintype (↥H)] :
-  Fintype (LeftCosetSet H) := sorry -- TODO: 証明を書く
+    Fintype (LeftCosetSet H) :=
+  sorry -- TODO: 証明を書く
 
-/-- 指数: G/H の元の個数 -/
+/-- 指数
+G/H 、 H\G の元の個数
+教科書では (G : H) と書かれます -/
 def index {G : Type} [Group G] [Fintype G] (H : Subgroup G) [Fintype (↥H)] : ℕ :=
   Fintype.card (LeftCosetSet H)
+
+/- `Nat.card G ⧸ H` と書くことができます -/
+
+/-- ラグランジュの定理
+|G| = (G : H)|H|
+
+`Subgroup.card_eq_card_quotient_mul_card_subgroup` があります。
+`Subgroup.card_subgroup_dvd_card` (ラグランジュの定理から得られる系)もあります。
+-/
+theorem lagrange_theorem {G : Type} [Group G] (H : Subgroup G) :
+    Nat.card G = Nat.card (G ⧸ H) * Nat.card H :=
+  sorry
 
 
 /-! ### 両側剰余類(double coset) -/
@@ -504,15 +519,17 @@ def DoubleCosetRel {G : Type} [Group G] (H K : Subgroup G) (g₁ g₂ : G) : Pro
   ∃ h ∈ H, ∃ k ∈ K, g₁ = h * g₂ * k
 
 /-- これは同値関係 -/
-instance instDoubleCosetEquiv {G : Type} [Group G] (H K : Subgroup G) : Equivalence (DoubleCosetRel H K) :=
+instance instDoubleCosetEquiv {G : Type} [Group G] (H K : Subgroup G) :
+    Equivalence (DoubleCosetRel H K) :=
   sorry -- TODO: 証明を書く
 
 /-- `Setoid` -/
-instance instDoubleCosetSetoid {G : Type} [Group G] (H K : Subgroup G) : Setoid G :=
-{
-    r := DoubleCosetRel H K,
-    iseqv := instDoubleCosetEquiv H K
-}
+instance instDoubleCosetSetoid {G : Type} [Group G] (H K : Subgroup G) :
+    Setoid G :=
+  {
+      r := DoubleCosetRel H K,
+      iseqv := instDoubleCosetEquiv H K
+  }
 
 /-- `Setoid` (`⟨⟩` を使った記法) -/
 def instDoubleCosetSetoid' {G : Type} [Group G] (H K : Subgroup G) : Setoid G :=
@@ -543,7 +560,7 @@ class Normal {G : Type} [Group G] (H : Subgroup G) : Prop where
 
 /-- G/N の代表元の積 (gN)(hN) = (gh)N -/
 def quotientMul {G : Type} [Group G] (H : Subgroup G) [Normal H] :
-  Quotient (LeftRelSetoid H) → Quotient (LeftRelSetoid H) → Quotient (LeftRelSetoid H) :=
+    Quotient (LeftRelSetoid H) → Quotient (LeftRelSetoid H) → Quotient (LeftRelSetoid H) :=
   -- Quotient.lift₂ は、 `Quotient` 上で変数が2個の関数を定義する関数(well-defined であることを助けてくれる)
   Quotient.lift₂
     (fun g h => Quotient.mk'' (g * h)) -- 定義する関数 (gN)(hN) = (gh)N
@@ -551,7 +568,8 @@ def quotientMul {G : Type} [Group G] (H : Subgroup G) [Normal H] :
 
 -- 自前定義用に、KerをNormalのインスタンスにする(=Kerは正規部分群)
 instance instKerNormal {G H : Type} [Group G] [Group H] (φ : Hom G H) :
-    Normal (Ker φ.toFun) := sorry
+    Normal (Ker φ.toFun) :=
+  sorry
 
 /- `Subgroup.Normal` というのがあるので、以降はこれを使います。 -/
 
@@ -596,12 +614,14 @@ instance instQuotientGroup {G : Type} [Group G] (N : Subgroup G) [Normal N] :
 -- Mathlib.GroupTheory.QuotientGroup.Basic QuotientGroup.quotientKerEquivRange
 /-- 準同型定理 -/
 def firstIsomorphismTheorem {G H : Type} [Group G] [Group H] (φ : G →* H) :
-    G ⧸ φ.ker ≃* φ.range := sorry
+    G ⧸ φ.ker ≃* φ.range :=
+  sorry
 
 -- mathlibの定義を、自前定義版に置き換え
 /-- 準同型定理 -/
 def firstIsomorphismTheorem' {G H : Type} [Group G] [Group H] (φ : Hom G H) :
-    Iso (QuotientGroup (Ker φ.toFun)) (Im φ.toFun) := sorry
+    Iso (QuotientGroup (Ker φ.toFun)) (Im φ.toFun) :=
+  sorry
 
 
 /-- 準同型定理
@@ -618,14 +638,10 @@ theorem first_homomorphism_theorem {G H : Type} [Group G] [Group H] (φ : G →*
     ∃! ψ : G ⧸ φ.ker →* H, ψ ∘ QuotientGroup.mk' φ.ker = φ
   := sorry
 
--- /-  -/
--- theorem a {G : Type} [Group G] {N : Subgroup G} [Subgroup.Normal N] :
-
-
 theorem second_homomorphism_theorem {G : Type} [Group G] (H N : Subgroup G) [Subgroup.Normal N] :
     ∃ K : Subgroup G, K = H ⊔ N ∧ H ⊔ N = N ⊔ H ∧
     Subgroup.Normal (H ⊓ N) -- ∧ ...
-    := sorry
+  := sorry
 
 
 /-! ### 群の作用(action) -/
@@ -666,7 +682,8 @@ def commutator' {G : Type} [Group G] (a b : G) : G :=
   a * b * a⁻¹ * b⁻¹
 
 /-- { [a, b] | a ∈ H, b ∈ K } で構成される G の部分群 -/
-def commutatorSubgroup {G : Type} [Group G] (H : Subgroup G) (K : Subgroup G) : Subgroup G :=
+def commutatorSubgroup {G : Type} [Group G] (H : Subgroup G) (K : Subgroup G) :
+    Subgroup G :=
   {
     carrier := { g | ∃ a ∈ H, ∃ b ∈ K, g = commutator' a b },
     mul_mem' := sorry,
@@ -683,4 +700,3 @@ def commutatorGroup {G : Type} [Group G] : Subgroup G :=
 `commutator` というのがあるので、こちらを使います。
 `commutator G` 、または `⁅_, _⁆` と書きます。
 -/
-
