@@ -555,11 +555,11 @@ def IsNormalSubgroup {G : Type} [Group G] (H : Subgroup G) : Prop :=
   ∀ g : G, ∀ h ∈ H, g * h * g ⁻¹ ∈ H
 
 /- 正規部分群のクラス -/
-class Normal {G : Type} [Group G] (H : Subgroup G) : Prop where
+class Normal' {G : Type} [Group G] (H : Subgroup G) : Prop where
   conj_mem : IsNormalSubgroup H
 
 /-- G/N の代表元の積 (gN)(hN) = (gh)N -/
-def quotientMul {G : Type} [Group G] (H : Subgroup G) [Normal H] :
+def quotientMul {G : Type} [Group G] (H : Subgroup G) [Normal' H] :
     Quotient (LeftRelSetoid H) → Quotient (LeftRelSetoid H) → Quotient (LeftRelSetoid H) :=
   -- Quotient.lift₂ は、 `Quotient` 上で変数が2個の関数を定義する関数(well-defined であることを助けてくれる)
   Quotient.lift₂
@@ -568,19 +568,17 @@ def quotientMul {G : Type} [Group G] (H : Subgroup G) [Normal H] :
 
 -- 自前定義用に、KerをNormalのインスタンスにする(=Kerは正規部分群)
 instance instKerNormal {G H : Type} [Group G] [Group H] (φ : Hom G H) :
-    Normal (Ker φ.toFun) :=
+    Normal' (Ker φ.toFun) :=
   sorry
-
-/- `Subgroup.Normal` というのがあるので、以降はこれを使います。 -/
 
 /-! ### 剰余群(factor group) -/
 
 /-- 剰余群(商群(quotient group))の型 -/
-def QuotientGroup {G : Type} [Group G] (N : Subgroup G) [Normal N] : Type :=
+def QuotientGroup {G : Type} [Group G] (N : Subgroup G) [Normal' N] : Type :=
   Quotient (LeftRelSetoid N)
 
 /-- 剰余群を群にする -/
-instance instQuotientGroup {G : Type} [Group G] (N : Subgroup G) [Normal N] :
+instance instQuotientGroup {G : Type} [Group G] (N : Subgroup G) [Normal' N] :
     Group (QuotientGroup N) :=
   {
     -- TODO: 証明を書く
@@ -592,6 +590,8 @@ instance instQuotientGroup {G : Type} [Group G] (N : Subgroup G) [Normal N] :
     inv := sorry,
     inv_mul_cancel := sorry
   }
+
+/- `Subgroup.Normal` というのがあるので、以降はこれを使います。 -/
 
 /-
 商群(剰余群) :
@@ -675,7 +675,11 @@ def stabilizer' {G X : Type} [Group G] [MulAction G X] (x : X) : Set G :=
 
 /- `stabilizer` というのがあるので、以降はこちらを使います。 -/
 
-/- 共役類 -/
+
+/- 共役類(conjugate class)
+x と共役である元の集合 -/
+def conjugateClass {G : Type} [Group G] (x : G) : Set G :=
+  { y | conjugation x y }
 
 /- 交換子(commutator) -/
 def commutator' {G : Type} [Group G] (a b : G) : G :=
@@ -700,3 +704,30 @@ def commutatorGroup {G : Type} [Group G] : Subgroup G :=
 `commutator` というのがあるので、こちらを使います。
 `commutator G` 、または `⁅_, _⁆` と書きます。
 -/
+
+/- 可解群 -/
+structure Solvable {G : Type} [Group G] where
+  n : ℕ
+  -- G₀, G₁, ... Gₙ
+  series : Fin (n + 1) → Subgroup G
+  -- G₀ = G
+  top : series 0 = ⊤
+  -- Gₙ = {1}
+  bottom : series (Fin.last n) = ⊥
+  -- G₀ ⊃ G₁ ⊃ ... ⊃ Gₙ
+  chain : ∀ i : Fin n, (series (Fin.succ i)).subgroupOf (series (Fin.castSucc i))
+  -- Gᵢ₊₁ ◁ Gᵢ
+  normal : ∀ i : Fin n,
+    let H := series (Fin.succ i)
+    let K := series (Fin.castSucc i)
+    ∀ k : K, ∀ h : H, k.val * h.val * (k.val)⁻¹ ∈ H
+  -- Gᵢ⧸Gᵢ₊₁ がアーベル群
+  abelian_quotient : ∀ i : Fin n,
+    let H := series (Fin.succ i) -- Gᵢ₊₁
+    let K := series (Fin.castSucc i) -- Gᵢ
+    let N : Subgroup K := Subgroup.comap (Subgroup.subtype K) H -- Gᵢ
+    CommGroup (K ⧸ N)
+  abelian_quotient' : ∀ i : Fin n,
+  CommGroup ((series (Fin.castSucc i)) ⧸
+    Subgroup.comap (Subgroup.subtype (series (Fin.castSucc i)))
+                   (series (Fin.succ i)))
