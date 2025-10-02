@@ -671,7 +671,7 @@ def orbit' {G X : Type} [Group G] [MulAction G X] (x : X) : Set X :=
 
 /- 安定化群(stabilizer) -/
 def stabilizer' {G X : Type} [Group G] [MulAction G X] (x : X) : Set G :=
-  { g | ∃ g : G, g • x = x}
+  { g | g • x = x }
 
 /- `stabilizer` というのがあるので、以降はこちらを使います。 -/
 
