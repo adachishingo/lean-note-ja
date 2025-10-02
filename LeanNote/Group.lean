@@ -574,12 +574,12 @@ instance instKerNormal {G H : Type} [Group G] [Group H] (φ : Hom G H) :
 /-! ### 剰余群(factor group) -/
 
 /-- 剰余群(商群(quotient group))の型 -/
-def QuotientGroup {G : Type} [Group G] (N : Subgroup G) [Normal' N] : Type :=
+def QuotientGroup' {G : Type} [Group G] (N : Subgroup G) [Normal' N] : Type :=
   Quotient (LeftRelSetoid N)
 
 /-- 剰余群を群にする -/
 instance instQuotientGroup {G : Type} [Group G] (N : Subgroup G) [Normal' N] :
-    Group (QuotientGroup N) :=
+    Group (QuotientGroup' N) :=
   {
     -- TODO: 証明を書く
     mul_assoc := sorry,
@@ -595,8 +595,8 @@ instance instQuotientGroup {G : Type} [Group G] (N : Subgroup G) [Normal' N] :
 
 /-
 商群(剰余群) :
-`HasQuotient.Quotient` というのがあるので、以降は `QuotientGroup` の代わりにこれを使います。
-`QuotientGroup G H` を `G ⧸ H` と書くことができます。
+`HasQuotient.Quotient` というのがあるので、以降は `QuotientGroup'` の代わりにこれを使います。
+`QuotientGroup' G H` を `G ⧸ H` と書くことができます。
 -/
 
 
@@ -620,7 +620,7 @@ def firstIsomorphismTheorem {G H : Type} [Group G] [Group H] (φ : G →* H) :
 -- mathlibの定義を、自前定義版に置き換え
 /-- 準同型定理 -/
 def firstIsomorphismTheorem' {G H : Type} [Group G] [Group H] (φ : Hom G H) :
-    Iso (QuotientGroup (Ker φ.toFun)) (Im φ.toFun) :=
+    Iso (QuotientGroup' (Ker φ.toFun)) (Im φ.toFun) :=
   sorry
 
 
