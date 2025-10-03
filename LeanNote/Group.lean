@@ -4,6 +4,7 @@ import Mathlib.Data.Fintype.Card
 import Mathlib.GroupTheory.QuotientGroup.Defs
 import Mathlib.SetTheory.Cardinal.Finite -- Nat.card
 import Mathlib.GroupTheory.OrderOfElement -- orderOf
+import Mathlib.GroupTheory.Commutator.Basic -- commutator
 -- import Mathlib.Data.Fintype.Defs
 -- import Mathlib.Data.Nat.Find
 -- import Mathlib.Data.Set.Defs
@@ -83,8 +84,7 @@ class Group' (α : Type) where
 -- `Nat.card G` と書くことができます。
 
 /- 自明な群 G = {e}
-ee = e と定義すると、群になる
--/
+ee = e と定義すると、群になる -/
 
 /- 群にべき乗(power)を定義 -/
 -- def pow {α : Type} [Group α] (x : α) : ℕ → α
@@ -114,14 +114,12 @@ instance instPermGroup {α : Type} : Group (Perm α) where
   mul_assoc := sorry
 
 /-- 互換(transposition): σ(i)=j, σ(j)=i で、それ以外は変えない置換 -/
-def swap {α : Type} [DecidableEq α] (a b : α) : Perm α :=
-{
+def swap {α : Type} [DecidableEq α] (a b : α) : Perm α where
   f := fun x =>
     if x = a then b
     else if x = b then a
-    else x,
+    else x
   bij := sorry
-}
 
 /-- 長さ m の巡回置換(cyclic permutation): i₁→i₂, i₂→i₃, ... iₘ→i₁ と移して、他は変えない置換 -/
 def cyclePerm {α : Type} [DecidableEq α] (m : ℕ) (cycle : List α) : Perm α :=
@@ -167,12 +165,9 @@ inductive GenWithInv {α : Type} (S : Set α) : Type
 def word {α : Type} (S : Set α) : Type :=
   List (GenWithInv S)
 
-/--
-word を評価して群の元を得る
-
+/-- word を評価して群の元を得る
 word の時点では、かけ算の列であって、 G の元ではないから、
-x₁¹x₁⁻¹...xₙ¹xₙ⁻¹ を計算しないといけないです。
--/
+x₁¹x₁⁻¹...xₙ¹xₙ⁻¹ を計算しないといけないです。 -/
 def evalWords {α : Type} [Group α] {S : Set α} : word S → α
   /- 先頭から値をひとつずつ取り出しながら、再帰的に全部の要素をかける -/
   | [] => 1 -- 長さが 0 なら単位元
@@ -275,7 +270,7 @@ def Aut' (G : Type) [Group G] : Type :=
 -- def Aut'' (G : Type) [Group G] : Type := { φ // AutoIso φ }
 
 /-- Aut G が群になる -/
-instance {G : Type} [Group G] : Group (Aut G) where
+instance instAut {G : Type} [Group G] : Group (Aut G) where
   -- TODO: 証明を書く
   mul  := sorry
   one := sorry
@@ -285,10 +280,8 @@ instance {G : Type} [Group G] : Group (Aut G) where
   mul_one := sorry
   inv_mul_cancel := sorry
 
-/--
-ig
-ig(h) = ghg⁻¹
--/
+/-- ig
+ig(h) = ghg⁻¹ -/
 def ig {G : Type} [Group G] (g : G) : G → G :=
   fun h => g * h * g⁻¹
 
@@ -320,8 +313,7 @@ structure Conjugate {G : Type} [Group G] (h₁ h₂ : G) : Prop where
 
 /- 写像 φ
 φ : G → Aut G
-φ(g) = ig
--/
+φ(g) = ig -/
 def φ {G : Type} [Group G] : G → Aut G :=
   fun g => {
     toFun := ig g,
@@ -338,10 +330,8 @@ def phiHom {G : Type} [Group G] : Hom G (Aut G) :=
   map_mul := sorry
 }
 
-/--
-内部自己同型群
-上の φ について、 Im(φ) ⊆ Aut G を内部自己同型群といい、 Inn Gと書く
--/
+/-- 内部自己同型群
+上の φ について、 Im(φ) ⊆ Aut G を内部自己同型群といい、 Inn Gと書く -/
 def Inn (G : Type) [Group G] : Set (Aut G) :=
   Im' φ
 
@@ -395,7 +385,6 @@ instance instEqEquiv' {α : Type} [Group α] : Equivalence' (@x_eq_y α _ ) wher
 
 同値類の集合 ⇒ 商
 (例: {1, 3, 5, ...}, {2, 4, 6, ...})
-
 -/
 
 /-- ライブラリーでは、同値関係を表すのに、 `Equivalence` というものを使う -/
@@ -443,31 +432,25 @@ def leftRel {G : Type} [Group G] (H : Subgroup G) (x y : G) : Prop :=
 
 /-- x⁻¹ * y ∈ H は同値関係 -/
 instance LeftRelEquiv {G : Type} [Group G] (H : Subgroup G) :
-    Equivalence (leftRel H) :=
-  {
-    refl := by
-      intro h
-      rw [leftRel]
-      rw [inv_mul_cancel]
-      apply one_mem
-    ,
-    -- TODO: 証明を書く
-    symm := by
-      intro h h2 h3
-      rw [leftRel]
-      rw [leftRel] at h3
-      sorry
-    ,
-    -- TODO: 証明を書く
-    trans := sorry
-  }
+    Equivalence (leftRel H) where
+  refl := by
+    intro h
+    rw [leftRel]
+    rw [inv_mul_cancel]
+    apply one_mem
+  -- TODO: 証明を書く
+  symm := by
+    intro h h2 h3
+    rw [leftRel]
+    rw [leftRel] at h3
+    sorry
+  -- TODO: 証明を書く
+  trans := sorry
 
 /-- 同値類を作るために、 x⁻¹ * y ∈ H の `Setoid` を作る -/
-instance LeftRelSetoid {G : Type} [Group G] (H : Subgroup G) : Setoid G :=
-{
-    r := leftRel H,
-    iseqv := LeftRelEquiv H
-}
+instance LeftRelSetoid {G : Type} [Group G] (H : Subgroup G) : Setoid G where
+  r := leftRel H
+  iseqv := LeftRelEquiv H
 
 /-- 同値類 -/
 def LeftCosetClass {G : Type} [Group G] (H : Subgroup G) (x : G) :
@@ -505,8 +488,7 @@ def index {G : Type} [Group G] [Fintype G] (H : Subgroup G) [Fintype (↥H)] : �
 |G| = (G : H)|H|
 
 `Subgroup.card_eq_card_quotient_mul_card_subgroup` があります。
-`Subgroup.card_subgroup_dvd_card` (ラグランジュの定理から得られる系)もあります。
--/
+`Subgroup.card_subgroup_dvd_card` (ラグランジュの定理から得られる系)もあります。 -/
 theorem lagrange_theorem {G : Type} [Group G] (H : Subgroup G) :
     Nat.card G = Nat.card (G ⧸ H) * Nat.card H :=
   sorry
@@ -525,11 +507,9 @@ instance instDoubleCosetEquiv {G : Type} [Group G] (H K : Subgroup G) :
 
 /-- `Setoid` -/
 instance instDoubleCosetSetoid {G : Type} [Group G] (H K : Subgroup G) :
-    Setoid G :=
-  {
-      r := DoubleCosetRel H K,
-      iseqv := instDoubleCosetEquiv H K
-  }
+    Setoid G where
+  r := DoubleCosetRel H K
+  iseqv := instDoubleCosetEquiv H K
 
 /-- `Setoid` (`⟨⟩` を使った記法) -/
 def instDoubleCosetSetoid' {G : Type} [Group G] (H K : Subgroup G) : Setoid G :=
@@ -579,17 +559,15 @@ def QuotientGroup' {G : Type} [Group G] (N : Subgroup G) [Normal' N] : Type :=
 
 /-- 剰余群を群にする -/
 instance instQuotientGroup {G : Type} [Group G] (N : Subgroup G) [Normal' N] :
-    Group (QuotientGroup' N) :=
-  {
-    -- TODO: 証明を書く
-    mul_assoc := sorry,
-    mul := sorry,
-    one := sorry,
-    one_mul := sorry,
-    mul_one := sorry,
-    inv := sorry,
-    inv_mul_cancel := sorry
-  }
+    Group (QuotientGroup' N) where
+  -- TODO: 証明を書く
+  mul_assoc := sorry
+  mul := sorry
+  one := sorry
+  one_mul := sorry
+  mul_one := sorry
+  inv := sorry
+  inv_mul_cancel := sorry
 
 /- `Subgroup.Normal` というのがあるので、以降はこれを使います。 -/
 
@@ -610,20 +588,6 @@ instance instQuotientGroup {G : Type} [Group G] (N : Subgroup G) [Normal' N] :
 ψはG/Ker(φ)からIm(φ)への同型となる
 -/
 
--- mathlibを使った定義
--- Mathlib.GroupTheory.QuotientGroup.Basic QuotientGroup.quotientKerEquivRange
-/-- 準同型定理 -/
-def firstIsomorphismTheorem {G H : Type} [Group G] [Group H] (φ : G →* H) :
-    G ⧸ φ.ker ≃* φ.range :=
-  sorry
-
--- mathlibの定義を、自前定義版に置き換え
-/-- 準同型定理 -/
-def firstIsomorphismTheorem' {G H : Type} [Group G] [Group H] (φ : Hom G H) :
-    Iso (QuotientGroup' (Ker φ.toFun)) (Im φ.toFun) :=
-  sorry
-
-
 /-- 準同型定理
 教科書の定義に沿ったもの
 
@@ -632,12 +596,28 @@ def firstIsomorphismTheorem' {G H : Type} [Group G] [Group H] (φ : Hom G H) :
 φ = ψ ∘ π となるような準同型 ψ : G/Ker(φ) → H がただ一つ存在し、
 ψ は G/Ker(φ) から Im(φ) への同型となる
 
-QuotientGroup.mk' φ.ker は、自然な準同型を表す(上記の π に該当)
--/
+QuotientGroup.mk' φ.ker は、自然な準同型を表す(上記の π に該当) -/
 theorem first_homomorphism_theorem {G H : Type} [Group G] [Group H] (φ : G →* H) :
     ∃! ψ : G ⧸ φ.ker →* H, ψ ∘ QuotientGroup.mk' φ.ker = φ
   := sorry
 
+
+/- 参考
+mathlibでの定義
+Mathlib.GroupTheory.QuotientGroup.Basic QuotientGroup.quotientKerEquivRange -/
+/-- 準同型定理 -/
+def firstIsomorphismTheorem {G H : Type} [Group G] [Group H] (φ : G →* H) :
+    G ⧸ φ.ker ≃* φ.range :=
+  sorry
+
+/- 参考
+上記mathlibの定義を、自前定義版に置き換え -/
+/-- 準同型定理 -/
+def firstIsomorphismTheorem' {G H : Type} [Group G] [Group H] (φ : Hom G H) :
+    Iso (QuotientGroup' (Ker φ.toFun)) (Im φ.toFun) :=
+  sorry
+
+/-- 第二準同型定理 -/
 theorem second_homomorphism_theorem {G : Type} [Group G] (H N : Subgroup G) [Subgroup.Normal N] :
     ∃ K : Subgroup G, K = H ⊔ N ∧ H ⊔ N = N ⊔ H ∧
     Subgroup.Normal (H ⊓ N) -- ∧ ...
@@ -653,8 +633,7 @@ theorem second_homomorphism_theorem {G : Type} [Group G] (H N : Subgroup G) [Sub
 を満たすもの
 g • x や gx とも書く
 
-G の X への作用があるとき、「G は X に作用する」という。
--/
+G の X への作用があるとき、「G は X に作用する」という。 -/
 structure LeftAction {G X : Type} [Group G] (φ : G → X → X) : Prop where
   one_mul : ∀ x, φ 1 x = x
   mul_assoc : ∀ g h x, φ g (φ h x) = φ (g * h) x
@@ -662,26 +641,43 @@ structure LeftAction {G X : Type} [Group G] (φ : G → X → X) : Prop where
 /- 作用を表す `MulAction` があるので、以降はこちらを使います。
 群 G が集合 X に作用することを `[MulAction G X]` と書くことができます。 -/
 
-/- 軌道(orbit) -/
+/-- 軌道(orbit) -/
 def orbit' {G X : Type} [Group G] [MulAction G X] (x : X) : Set X :=
   { y | ∃ g : G, g • x = y}
 
 /- `MulAction.orbit` というのがあるので、以降はこちらを使います。 -/
 
 
-/- 安定化群(stabilizer) -/
+/-- 安定化群(stabilizer) -/
 def stabilizer' {G X : Type} [Group G] [MulAction G X] (x : X) : Set G :=
   { g | g • x = x }
 
 /- `stabilizer` というのがあるので、以降はこちらを使います。 -/
 
+/-- 正規化群(normalizer) -/
+def normalizer' {G : Type} [Group G] (H : Subgroup G) : Set G :=
+  { g | ∀ h ∈ H, g * h * g⁻¹ = h}
 
-/- 共役類(conjugate class)
+/- `Subgroup.normalizer` があるので、以降はこれを使います。 -/
+
+/-- 中心化群(centralizer) -/
+def centralizer' {G : Type} [Group G] (H : Subgroup G) : Set G :=
+  { g | ∀ h ∈ H, g * h = h * g }
+
+/- `Subgroup.centralizer` があるので、以降はこれを使います。 -/
+
+/-- 中心(center) -/
+def center' {G : Type} [Group G] : Set G :=
+  { g₀ | ∀ g : G, g * g₀ * g⁻¹ = g₀ }
+
+/- `Subgroup.center` があるので、以降はこれを使います。 -/
+
+/-- 共役類(conjugate class)
 x と共役である元の集合 -/
 def conjugateClass {G : Type} [Group G] (x : G) : Set G :=
   { y | conjugation x y }
 
-/- 交換子(commutator) -/
+/-- 交換子(commutator) -/
 def commutator' {G : Type} [Group G] (a b : G) : G :=
   a * b * a⁻¹ * b⁻¹
 
@@ -699,13 +695,11 @@ def commutatorSubgroup {G : Type} [Group G] (H : Subgroup G) (K : Subgroup G) :
 def commutatorGroup {G : Type} [Group G] : Subgroup G :=
   commutatorSubgroup (⊤ : Subgroup G) (⊤ : Subgroup G)
 
-/-
-交換子群は
+/- 交換子群は
 `commutator` というのがあるので、こちらを使います。
-`commutator G` 、または `⁅_, _⁆` と書きます。
--/
+`commutator G` 、または `⁅_, _⁆` と書きます。 -/
 
-/- 可解群 -/
+/-- 可解群 -/
 structure Solvable {G : Type} [Group G] where
   n : ℕ
   -- G₀, G₁, ... Gₙ
@@ -722,12 +716,65 @@ structure Solvable {G : Type} [Group G] where
     let K := series (Fin.castSucc i)
     ∀ k : K, ∀ h : H, k.val * h.val * (k.val)⁻¹ ∈ H
   -- Gᵢ⧸Gᵢ₊₁ がアーベル群
-  abelian_quotient : ∀ i : Fin n,
+  abel : ∀ i : Fin n,
     let H := series (Fin.succ i) -- Gᵢ₊₁
     let K := series (Fin.castSucc i) -- Gᵢ
     let N : Subgroup K := Subgroup.comap (Subgroup.subtype K) H -- Gᵢ
     CommGroup (K ⧸ N)
-  abelian_quotient' : ∀ i : Fin n,
+  abel' : ∀ i : Fin n,
   CommGroup ((series (Fin.castSucc i)) ⧸
     Subgroup.comap (Subgroup.subtype (series (Fin.castSucc i)))
                    (series (Fin.succ i)))
+
+/-- べき零群 -/
+structure Nilpotent {G : Type} [Group G] where
+  n : ℕ
+  -- G₀, G₁, ... Gₙ
+  series : Fin (n + 1) → Subgroup G
+  -- G₀ = G
+  top : series 0 = ⊤
+  -- Gₙ = {1}
+  bottom : series (Fin.last n) = ⊥
+  -- G₀ ⊃ G₁ ⊃ ... ⊃ Gₙ
+  chain : ∀ i : Fin n, (series (Fin.succ i)).subgroupOf (series (Fin.castSucc i))
+  -- Gᵢ₊₁ ◁ Gᵢ
+  normal : ∀ i : Fin n,
+    let H := series (Fin.succ i)
+    let K := series (Fin.castSucc i)
+    ∀ k : K, ∀ h : H, k.val * h.val * (k.val)⁻¹ ∈ H
+  normalInG : ∀ i : Fin n, Subgroup.Normal (series (Fin.succ i)) -- これが無いと、centerはエラーになる
+  center : ∀ i : Fin n,
+    ∀ g x : G ⧸ (series (Fin.succ i)),
+      g * x = x * g
+
+
+/-- 交換子列
+D₁(G) = [G, G], Dᵢ₊₁(G) = [Dᵢ(G), Dᵢ(G)] と定義すると、
+G ⊃ D₁(G) ⊃ D₂(G) ⊃ ... であり、これを G の交換子列という -/
+def derivedSeries' (G : Type) [Group G] : ℕ → Subgroup G
+  | 0 => ⊤
+  | n + 1 => ⁅derivedSeries' G n, derivedSeries' G n⁆
+
+/- `derivedSeries` があるので、以降はこれを使います。 -/
+
+/-- 中心化列
+Z₁(G) = [G, G], Zᵢ₊₁(G) = [G, Zᵢ(G)] と定義すると、
+G ⊃ Z₁(G) ⊃ Z₂(G) ⊃ ... であり、これを G の中心化列という -/
+def centerSeries' (G : Type) [Group G] : ℕ → Subgroup G
+  | 0     => ⊤  -- 全体群
+  | n + 1 => Subgroup.centralizer (centerSeries' G n)
+
+/-- 単純群
+自明でない群 G が正規部分群を持たない -/
+class IsSimpleGroup' (G : Type) [Group G] : Prop where
+  nontrivial : Nontrivial G -- G が自明でない
+  -- ⊥  と ⊤ は正規部分群なので、「正規部分群を持たない」ではなく、正規部分群は ⊥  と ⊤ のみ、とする
+  eq_bot_or_eq_top_of_normal : ∀ (H : Subgroup G), Subgroup.Normal H → H = ⊥ ∨ H = ⊤
+
+/-- p 群
+p を素数とし、 G が有限群で |G| が pᵉ という形であるとき、 G を p 群という -/
+def isPGroup' (G : Type) [Group G] [Fintype G] : Prop :=
+  -- [Fintype G] が「 G が有限群」ということを表す
+  ∃ p e, Nat.card G = p ^ e
+
+/- `isPGroup` があるので、以降はこれを使います。 -/
